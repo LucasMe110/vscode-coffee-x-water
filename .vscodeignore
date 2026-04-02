@@ -1,0 +1,5 @@
+.vscode/**
+.gitignore
+image.png
+modelo.jpeg
+node_modules/**

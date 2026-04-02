@@ -1,0 +1,48 @@
+{
+  "name": "cafe-x-agua",
+  "displayName": "Coffee × Water",
+  "description": "Track your coffee and water intake. If coffee is 5x more than water, a shaking kidney appears!",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "type": "webview",
+          "id": "cafeXAgua.sidebarView",
+          "name": "Coffee × Water"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "cafeXAgua.addCafe",
+        "title": "Coffee × Water: Add Coffee ☕"
+      },
+      {
+        "command": "cafeXAgua.addAgua",
+        "title": "Coffee × Water: Add Water 💧"
+      },
+      {
+        "command": "cafeXAgua.reset",
+        "title": "Coffee × Water: Reset Counters"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0"
+  }
+}
