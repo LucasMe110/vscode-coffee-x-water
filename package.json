@@ -23,6 +23,18 @@
         }
       ]
     },
+    "configuration": {
+      "title": "Coffee × Water",
+      "properties": {
+        "cafeXAgua.language": {
+          "type": "string",
+          "default": "en",
+          "enum": ["en", "pt"],
+          "enumDescriptions": ["English", "Português"],
+          "description": "Extension language / Idioma da extensão"
+        }
+      }
+    },
     "commands": [
       {
         "command": "cafeXAgua.addCafe",
@@ -35,8 +47,22 @@
       {
         "command": "cafeXAgua.reset",
         "title": "Coffee × Water: Reset Counters"
+      },
+      {
+        "command": "cafeXAgua.changeLanguage",
+        "title": "Coffee × Water: Change Language",
+        "icon": "$(globe)"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "cafeXAgua.changeLanguage",
+          "when": "view == cafeXAgua.sidebarView",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "lint": "eslint .",

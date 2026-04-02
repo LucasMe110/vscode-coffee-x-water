@@ -4,19 +4,77 @@ let cafeCount = 0;
 let aguaCount = 0;
 let sidebarProvider = null;
 
+const i18n = {
+  en: {
+    dangerText: 'Your kidney is in danger!',
+    warning: '⚠️ Your kidney is shaking! Drink more water! 💧',
+    reset: 'Coffee × Water: Counters reset!',
+    coffee: 'Coffee',
+    water: 'Water',
+    happyMessages: [
+      "Your kidney just sent you a thank-you card!",
+      "Kidney says: finally someone who loves me!",
+      "Your kidney is doing a happy dance right now!",
+      "Plot twist: your kidney wants to nominate you for a Nobel Prize!",
+      "Your kidney called. It said you're its favorite human.",
+      "Kidney status: living its best life!",
+      "Your kidney wrote you a 5-star review on Yelp.",
+      "Breaking news: kidney declares today a national holiday!",
+      "Your kidney is so happy it started singing in the shower.",
+      "Kidney memo: promotion from 'meh' to 'absolute legend'!"
+    ]
+  },
+  pt: {
+    dangerText: 'Seu rim está em perigo!',
+    warning: '⚠️ Seu rim está tremendo! Beba mais água! 💧',
+    reset: 'Café × Água: Contadores resetados!',
+    coffee: 'Café',
+    water: 'Água',
+    happyMessages: [
+      "Seu rim acabou de te enviar um cartão de agradecimento!",
+      "Rim diz: finalmente alguém que me ama!",
+      "Seu rim está dançando de felicidade agora!",
+      "Plot twist: seu rim quer te indicar para o Prêmio Nobel!",
+      "Seu rim ligou. Disse que você é o humano favorito dele.",
+      "Status do rim: vivendo sua melhor vida!",
+      "Seu rim te deu 5 estrelas no Google.",
+      "Última hora: rim decreta hoje feriado nacional!",
+      "Seu rim está tão feliz que começou a cantar no chuveiro.",
+      "Memo do rim: promoção de 'meh' para 'lenda absoluta'!"
+    ]
+  }
+};
+
+function getLang() {
+  return vscode.workspace.getConfiguration('cafeXAgua').get('language', 'en');
+}
+
+function t() {
+  return i18n[getLang()] || i18n.en;
+}
+
 class CafeAguaSidebarProvider {
-  constructor() {
+  constructor(extensionUri) {
     this._view = null;
+    this._extensionUri = extensionUri;
   }
 
   resolveWebviewView(webviewView) {
     this._view = webviewView;
 
     webviewView.webview.options = {
-      enableScripts: true
+      enableScripts: true,
+      localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'media')]
     };
 
-    webviewView.webview.html = getWebviewContent();
+    const happyImg = webviewView.webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'media', 'kidney-happy.png')
+    );
+    const sadImg = webviewView.webview.asWebviewUri(
+      vscode.Uri.joinPath(this._extensionUri, 'media', 'kidney-sad.png')
+    );
+
+    webviewView.webview.html = getWebviewContent(happyImg, sadImg);
 
     webviewView.webview.onDidReceiveMessage(msg => {
       if (msg.type === 'addCafe') {
@@ -31,7 +89,7 @@ class CafeAguaSidebarProvider {
         cafeCount = 0;
         aguaCount = 0;
         this.update();
-        vscode.window.showInformationMessage('Coffee × Water: Counters reset!');
+        vscode.window.showInformationMessage(t().reset);
       }
     });
 
@@ -41,27 +99,32 @@ class CafeAguaSidebarProvider {
 
   update() {
     if (this._view) {
+      const lang = t();
       this._view.webview.postMessage({
         type: 'update',
         cafe: cafeCount,
         agua: aguaCount,
         alert: isKidneyAlert(),
-        happy: isKidneyHappy()
+        happy: isKidneyHappy(),
+        lang: {
+          dangerText: lang.dangerText,
+          coffee: lang.coffee,
+          water: lang.water,
+          happyMessages: lang.happyMessages
+        }
       });
     }
   }
 
   _checkKidneyWarning() {
     if (isKidneyAlert()) {
-      vscode.window.showWarningMessage(
-        '⚠️ Your kidney is shaking! Drink more water! 💧'
-      );
+      vscode.window.showWarningMessage(t().warning);
     }
   }
 }
 
 function isKidneyAlert() {
-  return (cafeCount - aguaCount) >= 5;
+  return (cafeCount - aguaCount) >= 3;
 }
 
 function isKidneyHappy() {
@@ -69,7 +132,7 @@ function isKidneyHappy() {
 }
 
 function activate(context) {
-  sidebarProvider = new CafeAguaSidebarProvider();
+  sidebarProvider = new CafeAguaSidebarProvider(context.extensionUri);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider('cafeXAgua.sidebarView', sidebarProvider)
   );
@@ -95,14 +158,40 @@ function activate(context) {
       cafeCount = 0;
       aguaCount = 0;
       sidebarProvider.update();
-      vscode.window.showInformationMessage('Café × Água: Contadores resetados!');
+      vscode.window.showInformationMessage(t().reset);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('cafeXAgua.changeLanguage', async () => {
+      const current = getLang();
+      const picked = await vscode.window.showQuickPick(
+        [
+          { label: '🇺🇸 English', value: 'en', picked: current === 'en' },
+          { label: '🇧🇷 Português', value: 'pt', picked: current === 'pt' }
+        ],
+        { placeHolder: current === 'en' ? 'Select language' : 'Selecione o idioma' }
+      );
+      if (picked) {
+        await vscode.workspace.getConfiguration('cafeXAgua').update('language', picked.value, true);
+        sidebarProvider.update();
+      }
+    })
+  );
+
+  // Re-render when language setting changes
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration(e => {
+      if (e.affectsConfiguration('cafeXAgua.language')) {
+        sidebarProvider.update();
+      }
     })
   );
 }
 
-function getWebviewContent() {
+function getWebviewContent(happyImg, sadImg) {
   return `<!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -167,14 +256,15 @@ function getWebviewContent() {
     .btn-reset { background: #555; }
 
     .kidney-container {
-      margin-top: 12px;
+      margin-bottom: 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 4px;
     }
     .kidney {
-      font-size: 36px;
+      width: 80px;
+      height: auto;
       animation: shake 0.3s ease-in-out infinite;
     }
     .status-text {
@@ -197,7 +287,8 @@ function getWebviewContent() {
       gap: 4px;
     }
     .happy-kidney {
-      font-size: 36px;
+      width: 80px;
+      height: auto;
       animation: bounce 1s ease-in-out infinite;
     }
     .happy-text {
@@ -251,13 +342,13 @@ function getWebviewContent() {
 </head>
 <body>
   <div class="happy-container hidden" id="happy-container">
-    <div class="happy-kidney">🫘</div>
+    <img class="happy-kidney" src="${happyImg}" alt="Happy kidney" />
     <div class="happy-text" id="happy-text"></div>
   </div>
 
   <div class="kidney-container hidden" id="kidney-container">
-    <div class="kidney" id="kidney">🫘</div>
-    <div class="status-text">Your kidney is in danger!</div>
+    <img class="kidney" id="kidney" src="${sadImg}" alt="Sad kidney" />
+    <div class="status-text" id="danger-text">Your kidney is in danger!</div>
   </div>
 
   <div class="counter-group">
@@ -300,25 +391,22 @@ function getWebviewContent() {
         const prevAgua = agua;
         cafe = msg.cafe;
         agua = msg.agua;
+        const lang = msg.lang;
+
         document.getElementById('cafe-num').textContent = cafe;
         document.getElementById('agua-num').textContent = agua;
+
+        // Update button labels
+        document.getElementById('btn-cafe').textContent = '☕ ' + lang.coffee;
+        document.getElementById('btn-agua').textContent = '💧 ' + lang.water;
+
+        // Update danger text
+        document.getElementById('danger-text').textContent = lang.dangerText;
+
 
         const kidneyContainer = document.getElementById('kidney-container');
         const happyContainer = document.getElementById('happy-container');
         const happyText = document.getElementById('happy-text');
-
-        const happyMessages = [
-          "Your kidney just sent you a thank-you card!",
-          "Kidney says: finally someone who loves me!",
-          "Your kidney is doing a happy dance right now!",
-          "Plot twist: your kidney wants to nominate you for a Nobel Prize!",
-          "Your kidney called. It said you're its favorite human.",
-          "Kidney status: living its best life!",
-          "Your kidney wrote you a 5-star review on Yelp.",
-          "Breaking news: kidney declares today a national holiday!",
-          "Your kidney is so happy it started singing in the shower.",
-          "Kidney memo: promotion from 'meh' to 'absolute legend'!"
-        ];
 
         if (msg.alert) {
           kidneyContainer.classList.remove('hidden');
@@ -326,7 +414,7 @@ function getWebviewContent() {
         } else if (msg.happy) {
           kidneyContainer.classList.add('hidden');
           happyContainer.classList.remove('hidden');
-          happyText.textContent = happyMessages[Math.floor(Math.random() * happyMessages.length)];
+          happyText.textContent = lang.happyMessages[Math.floor(Math.random() * lang.happyMessages.length)];
         } else {
           kidneyContainer.classList.add('hidden');
           happyContainer.classList.add('hidden');
