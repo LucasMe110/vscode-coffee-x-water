@@ -3,6 +3,12 @@
   "displayName": "Coffee × Water",
   "description": "Track your coffee and water intake. If coffee is 5x more than water, a shaking kidney appears!",
   "version": "0.0.1",
+  "publisher": "lucasme110",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LucasMe110/vscode-coffee-x-water"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },
