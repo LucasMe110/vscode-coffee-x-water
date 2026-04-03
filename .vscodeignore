@@ -1,4 +1,5 @@
 .vscode/**
+.claude/**
 .gitignore
 image.png
 modelo.jpeg
