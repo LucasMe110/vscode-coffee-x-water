@@ -4,6 +4,7 @@
   "description": "Track your coffee and water intake. If coffee is 5x more than water, a shaking kidney appears!",
   "version": "0.0.1",
   "publisher": "lucasme110",
+  "icon": "media/icon.png",
   "license": "MIT",
   "repository": {
     "type": "git",
