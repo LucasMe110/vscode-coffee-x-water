@@ -17,7 +17,11 @@ Track every cup of coffee and glass of water right from the Explorer sidebar. No
 >
 > *"Breaking news: kidney declares today a national holiday!"*
 
+<video src="media/kidney-happy-demo.mp4" controls width="600"></video>
+
 **Kidney in Danger** - When the difference between coffee and water reaches 3 or more, a shaking kidney appears with a warning. Time to hydrate!
+
+<video src="media/kidney-sad-demo.mp4" controls width="600"></video>
 
 ### Particle Effects
 - Water drops fall when you add water
